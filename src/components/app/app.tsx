@@ -1,13 +1,18 @@
-import { ConstructorPage } from '@pages';
+import { FC } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { AppContent } from '../app-content';
+import { Provider } from 'react-redux';
+import store from '../../services/store';
 import '../../index.css';
 import styles from './app.module.css';
 
-import { AppHeader } from '@components';
-
-const App = () => (
+const App: FC = () => (
   <div className={styles.app}>
-    <AppHeader />
-    <ConstructorPage />
+    <Provider store={store}>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </Provider>
   </div>
 );
 
