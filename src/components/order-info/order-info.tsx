@@ -1,14 +1,16 @@
 import { FC, useMemo, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from '../../services/store';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient, TOrder } from '@utils-types';
 import { getOrderByNumberApi } from '../../utils/burger-api';
 import { selectIngredients } from '../../services/selectors';
+import { PageWrapper } from '../page-wrapper';
 
 export const OrderInfo: FC = () => {
   const { number } = useParams<{ number: string }>();
+  const location = useLocation();
   const dispatch = useDispatch();
   const ingredients = useSelector(selectIngredients);
 
@@ -93,5 +95,14 @@ export const OrderInfo: FC = () => {
     return <Preloader />;
   }
 
-  return <OrderInfoUI orderInfo={orderInfo} />;
+  const content = <OrderInfoUI orderInfo={orderInfo} />;
+  const isModal = !!location.state?.background;
+
+  return isModal ? (
+    content
+  ) : (
+    <PageWrapper title={`#${String(orderInfo.number).padStart(6, '0')}`}>
+      {content}
+    </PageWrapper>
+  );
 };
