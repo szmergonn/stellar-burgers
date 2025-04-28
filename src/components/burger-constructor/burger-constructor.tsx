@@ -1,43 +1,79 @@
 import { FC, useMemo } from 'react';
+import { useSelector, useDispatch } from '../../services/store';
+import { useNavigate } from 'react-router-dom';
+import {
+  selectConstructorItems,
+  selectOrderData,
+  selectOrderRequest,
+  selectUser
+} from '../../services/selectors';
+
+import { createOrder } from '../../services/slices/order-slice';
+import { clearConstructor } from '../../services/slices/constructor-slice';
+import { clearOrder } from '../../services/slices/order-slice';
 import { TConstructorIngredient } from '@utils-types';
 import { BurgerConstructorUI } from '@ui';
 
 export const BurgerConstructor: FC = () => {
-  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems = {
-    bun: {
-      price: 0
-    },
-    ingredients: []
-  };
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const orderRequest = false;
+  const constructorItems = useSelector(selectConstructorItems);
+  const orderRequest = useSelector(selectOrderRequest);
+  const orderData = useSelector(selectOrderData);
+  const user = useSelector(selectUser);
 
-  const orderModalData = null;
+  const price = useMemo(() => {
+    const bunPrice =
+      constructorItems.bun && constructorItems.bun.price
+        ? constructorItems.bun.price * 2
+        : 0;
+    const ingredientsPrice = constructorItems.ingredients.reduce(
+      (sum: number, item: TConstructorIngredient) => sum + item.price,
+      0
+    );
+
+    return bunPrice + ingredientsPrice;
+  }, [constructorItems]);
 
   const onOrderClick = () => {
     if (!constructorItems.bun || orderRequest) return;
+
+    if (!user) {
+      navigate('/login', {
+        state: { from: { pathname: '/' } },
+        replace: true
+      });
+      return;
+    }
+
+    const ingredientIds = constructorItems.ingredients.map((item) => item._id);
+
+    if (constructorItems.bun) {
+      ingredientIds.push(constructorItems.bun._id);
+      ingredientIds.unshift(constructorItems.bun._id);
+    }
+
+    dispatch(createOrder(ingredientIds))
+      .unwrap()
+      .then(() => {
+        dispatch(clearConstructor());
+      })
+      .catch((err) => {
+        console.error('Ошибка при создании заказа:', err);
+      });
   };
-  const closeOrderModal = () => {};
 
-  const price = useMemo(
-    () =>
-      (constructorItems.bun ? constructorItems.bun.price * 2 : 0) +
-      constructorItems.ingredients.reduce(
-        (s: number, v: TConstructorIngredient) => s + v.price,
-        0
-      ),
-    [constructorItems]
-  );
-
-  return null;
+  const closeOrderModal = () => {
+    dispatch(clearOrder());
+  };
 
   return (
     <BurgerConstructorUI
       price={price}
       orderRequest={orderRequest}
       constructorItems={constructorItems}
-      orderModalData={orderModalData}
+      orderModalData={orderData?.order || null}
       onOrderClick={onOrderClick}
       closeOrderModal={closeOrderModal}
     />
