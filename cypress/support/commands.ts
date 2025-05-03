@@ -30,13 +30,11 @@ Cypress.Commands.add('authenticate', () => {
 });
 
 Cypress.Commands.add('cleanAuthData', () => {
-  // Удаляем токены из localStorage
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
+  // Очистка localStorage
+  cy.clearLocalStorage();
 
-  // Удаляем cookie
-  cy.clearCookie('accessToken');
-  cy.clearCookie('refreshToken');
+  // Очистка cookies
+  cy.clearCookies();
 });
 
 Cypress.Commands.add('interceptApiRequests', () => {

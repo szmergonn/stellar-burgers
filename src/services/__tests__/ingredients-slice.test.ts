@@ -1,11 +1,24 @@
-import ingredientsReducer from '../slices/ingredients-slice';
+import ingredientsReducer, {
+  fetchIngredients
+} from '../slices/ingredients-slice';
 import { TIngredient } from '@utils-types';
 
-// Мокаем экшены, т.к. они являются асинхронными
-const pendingAction = { type: 'ingredients/fetchIngredients/pending' };
-const fulfilledAction = {
-  type: 'ingredients/fetchIngredients/fulfilled',
-  payload: [
+// Создаем мок для имитации асинхронного запроса
+jest.mock('../../utils/burger-api', () => ({
+  getIngredientsApi: jest.fn()
+}));
+
+describe('ingredients reducer', () => {
+  const initialState = {
+    ingredients: [],
+    ingredientsRequest: false,
+    ingredientsFailed: false,
+    error: null,
+    selectedIngredient: null
+  };
+
+  // Тестовые данные для имитации ответа API
+  const mockIngredients = [
     {
       _id: 'ingredient-id-1',
       name: 'Ингредиент 1',
@@ -32,25 +45,12 @@ const fulfilledAction = {
       image_large: 'ingredient-image-large-2',
       image_mobile: 'ingredient-image-mobile-2'
     }
-  ] as TIngredient[]
-};
-const rejectedAction = {
-  type: 'ingredients/fetchIngredients/rejected',
-  payload: 'Ошибка загрузки ингредиентов'
-};
+  ] as TIngredient[];
 
-describe('ingredients reducer', () => {
   // Тест для проверки состояния при начале запроса
   it('должен обрабатывать экшен Request - ставить ingredientsRequest в true', () => {
-    const initialState = {
-      ingredients: [],
-      ingredientsRequest: false,
-      ingredientsFailed: false,
-      error: null,
-      selectedIngredient: null
-    };
-
-    const nextState = ingredientsReducer(initialState, pendingAction);
+    const action = fetchIngredients.pending('', undefined);
+    const nextState = ingredientsReducer(initialState, action);
 
     expect(nextState.ingredientsRequest).toBe(true);
     expect(nextState.ingredientsFailed).toBe(false);
@@ -59,36 +59,34 @@ describe('ingredients reducer', () => {
 
   // Тест для проверки успешного завершения запроса
   it('должен обрабатывать экшен Success - записывать данные и ставить ingredientsRequest в false', () => {
-    const initialState = {
-      ingredients: [],
-      ingredientsRequest: true,
-      ingredientsFailed: false,
-      error: null,
-      selectedIngredient: null
-    };
-
-    const nextState = ingredientsReducer(initialState, fulfilledAction);
+    const action = fetchIngredients.fulfilled(mockIngredients, '', undefined);
+    const nextState = ingredientsReducer(
+      { ...initialState, ingredientsRequest: true },
+      action
+    );
 
     expect(nextState.ingredientsRequest).toBe(false);
     expect(nextState.ingredientsFailed).toBe(false);
-    expect(nextState.ingredients).toEqual(fulfilledAction.payload);
+    expect(nextState.ingredients).toEqual(mockIngredients);
     expect(nextState.error).toBeNull();
   });
 
   // Тест для проверки обработки ошибки запроса
   it('должен обрабатывать экшен Failed - записывать ошибку и ставить ingredientsRequest в false', () => {
-    const initialState = {
-      ingredients: [],
-      ingredientsRequest: true,
-      ingredientsFailed: false,
-      error: null,
-      selectedIngredient: null
-    };
-
-    const nextState = ingredientsReducer(initialState, rejectedAction);
+    const errorMessage = 'Ошибка загрузки ингредиентов';
+    const action = fetchIngredients.rejected(
+      new Error(errorMessage),
+      '',
+      undefined,
+      errorMessage
+    );
+    const nextState = ingredientsReducer(
+      { ...initialState, ingredientsRequest: true },
+      action
+    );
 
     expect(nextState.ingredientsRequest).toBe(false);
     expect(nextState.ingredientsFailed).toBe(true);
-    expect(nextState.error).toBe(rejectedAction.payload);
+    expect(nextState.error).toBe(errorMessage);
   });
 });
