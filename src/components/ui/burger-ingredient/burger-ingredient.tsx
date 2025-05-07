@@ -20,6 +20,7 @@ export const BurgerIngredientUI: FC<TBurgerIngredientUIProps> = memo(
           className={styles.article}
           to={`/ingredients/${_id}`}
           state={locationState}
+          data-cy={`ingredient-${ingredient.type}`}
         >
           {count > 0 && <Counter count={count} />}
           <img className={styles.img} src={image} alt={name} />
@@ -33,6 +34,7 @@ export const BurgerIngredientUI: FC<TBurgerIngredientUIProps> = memo(
           text='Добавить'
           onClick={handleAdd}
           extraClass={`${styles.addButton} mt-8`}
+          data-cy='button-add-ingredient'
         />
       </li>
     );
